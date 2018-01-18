@@ -3,6 +3,7 @@
 # The MIT License
 #
 # Copyright (c) 2007 Damon Kohler
+# Copyright (c) 2017 Muhammad Furqan Habibi (Adding Create 2)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +44,7 @@ functionality in the Turtlebot class. In addition, since OI is built on SCI the
 SerialCommandInterface class is also used for OI.
 
 """
-__author__ = "damonkohler@gmail.com (Damon Kohler)"
+__author__ = "damonkohler@gmail.com (Damon Kohler), furqan.habibi1@gmail.com (Muhammad Furqan Habibi)"
 
 import logging
 import math
@@ -94,8 +95,27 @@ CREATE_OPCODES = dict(
     wait_event = 158,
     )
 
+CREATE2_OPCODES = dict(
+    soft_reset = 7,
+    query = 142,
+    pwm_motors = 144,
+    drive_wheels = 145,
+    drive_pwm = 146,
+    stream = 148,
+    query_list = 149,
+    do_stream = 150,
+    scheduling_leds = 162,
+    digit_leds_raw = 163,
+    digit_leds_ascii = 164,
+    buttons = 165,
+    schedule = 166,
+    set_day_time = 167,
+    stop = 173,
+    )
+
 REMOTE_OPCODES = {
     # Remote control.
+    0: 'none',
     129: 'left',
     130: 'forward',
     131: 'right',
@@ -123,7 +143,18 @@ REMOTE_OPCODES = {
     252: 'red-buoy-and-green-buoy',
     254: 'red-buoy-and-green-buoy-and-force-field',
     255: 'none',
-    }
+    # Roomba 600 drive-on charger.
+    160: 'reserved',
+    161: 'force-field',
+    164: 'green-buoy',
+    165: 'green-buoy-and-force-field',
+    168: 'red-buoy',
+    169: 'red-buoy-and-force-field',
+    172: 'red-buoy-and-green-buoy',
+    173: 'red-buoy-and-green-buoy-and-force-field',
+    # Roomba 600 Virtual Wall.
+    162: 'virtual-wall'
+   }
 
 BAUD_RATES = (  # In bits per second.
     300,
@@ -136,8 +167,8 @@ BAUD_RATES = (  # In bits per second.
     19200,
     28800,
     38400,
-    57600,  # Default.
-    115200)
+    57600,  # Default for Roomba and Create
+    115200) # Default for Create 2
 
 CHARGING_STATES = (
     'not-charging',
@@ -179,7 +210,10 @@ SENSOR_GROUP_PACKET_LENGTHS = {
     4: 14,
     5: 12,
     6: 52,
-    100: 80 }
+    100: 80,
+    101: 28,
+    102: 12,
+    103: 9 }
 
 # drive constants.
 RADIUS_TURN_IN_PLACE_CW = -1
@@ -190,9 +224,11 @@ RADIUS_MAX = 2000
 VELOCITY_MAX = 500  # mm/s
 VELOCITY_SLOW = int(VELOCITY_MAX * 0.33)
 VELOCITY_FAST = int(VELOCITY_MAX * 0.66)
+VELOCITY_MIN = 25  # mm/s
 
 MAX_WHEEL_SPEED = 500
 WHEEL_SEPARATION = 260  # mm
+WHEEL_SEPARATION_CREATE2 = 235  # mm (I'm measuring ~233/234)
 
 SERIAL_TIMEOUT = 2  # Number of seconds to wait for reads. 2 is generous.
 START_DELAY = 5  # Time it takes the Roomba/Turtlebot to boot.
@@ -400,9 +436,11 @@ class Turtlebot(Roomba):
     """
     super(Turtlebot, self).__init__()
     
-  def start(self, tty='/dev/ttyUSB0', baudrate=57600):
+  def start(self, tty='/dev/ttyUSB0', baudrate=115200):
     super(Turtlebot, self).start(tty, baudrate)
     self.sci.add_opcodes(CREATE_OPCODES)
+    """Add the Create 2 OpCodes"""
+    self.sci.add_opcodes(CREATE2_OPCODES) ;
       
   def control(self):
     """Start the robot's SCI interface and place it in safe or full mode."""
