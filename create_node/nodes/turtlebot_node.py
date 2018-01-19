@@ -518,6 +518,13 @@ def connected_file():
 
 def turtlebot_main(argv):
     c = TurtlebotNode()
+
+    def on_shutdown():
+        rospy.loginfo("Setting robot to passive mode on shutdown")
+        c.robot.passive()
+    
+    rospy.on_shutdown(on_shutdown)
+
     while not rospy.is_shutdown():
         try:
             # This sleep throttles reconnecting of the driver.  It
