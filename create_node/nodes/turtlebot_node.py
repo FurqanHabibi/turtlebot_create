@@ -75,6 +75,8 @@ from create_node.songs import bonus
 import dynamic_reconfigure.server
 from create_node.cfg import TurtleBotConfig
 
+class ReadingException(Exception):
+    pass
 
 class TurtlebotNode(object):
 
@@ -362,6 +364,9 @@ class TurtlebotNode(object):
                 # packet read can get interrupted, restart loop to
                 # check for exit conditions
                 continue
+            except ReadingException:
+                r.sleep()
+                continue
 
             except DriverError: 
                 if sensor_read_retry_count > 0: 
@@ -470,7 +475,7 @@ class TurtlebotNode(object):
 
         # On startup, Create can report junk readings
         if abs(sensor_state.distance) > 1.0 or abs(sensor_state.angle) > 1.0:
-            raise Exception("Distance, angle displacement too big, invalid readings from robot. Distance: %.2f, Angle: %.2f" % (sensor_state.distance, sensor_state.angle))
+            raise ReadingException("Distance, angle displacement too big, invalid readings from robot. Distance: %.2f, Angle: %.2f" % (sensor_state.distance, sensor_state.angle))
 
         # this is really delta_distance, delta_angle
         d  = sensor_state.distance * self.odom_linear_scale_correction #correction factor from calibration
@@ -522,7 +527,7 @@ def turtlebot_main(argv):
     def on_shutdown():
         rospy.loginfo("Setting robot to passive mode on shutdown")
         c.robot.passive()
-    
+
     rospy.on_shutdown(on_shutdown)
 
     while not rospy.is_shutdown():

@@ -91,8 +91,8 @@ class Create2SensorHandler(object):
        self.light_bump_center_right, self.light_bump_front_right, self.light_bump_right,
        self.ir_opcode_left, self.ir_opcode_right,
        self.left_motor_current, self.right_motor_current,
-       self.main_brish_current, self.side_brush_current,
-       self.statis, ) = self._sensor_state_struct.unpack(buffer[0:80])
+       self.main_brush_current, self.side_brush_current,
+       self.stasis, ) = self._sensor_state_struct.unpack(buffer[0:80])
     except struct.error, e:
       raise roslib.message.DeserializationError(e)
 
@@ -124,9 +124,12 @@ class Create2SensorHandler(object):
       self.distance = (distance_left + distance_right) / 2.0
       self.angle = (distance_right - distance_left) / robot_types.ROBOT_TYPES['create2'].wheel_separation
     else:
-      self.disance = 0
+      self.distance = 0
       self.angle = 0
     self._last_encoder_counts = (self.encoder_counts_left, self.encoder_counts_right)
+    #self.distance /= 1000
+    #self.angle *= math.pi/180
+
 
   def _normalize_encoder_count(self, count_delta, maximal_count):
     if count_delta >= maximal_count / 2:
