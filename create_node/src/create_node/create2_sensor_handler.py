@@ -44,7 +44,7 @@ import robot_types
 
 class Create2SensorHandler(object):
 
-  CREATE2_PULSES_TO_M = 0.000445558279992234
+  CREATE2_PULSES_TO_M = 0.072 * math.pi / 508.8
     
   def __init__(self, robot):
     self._robot = robot
